@@ -1,9 +1,13 @@
+// Variables
+let serverPath = 'http://192.168.10.10:8080/api/entry';
+let apiAddress = "http://192.168.10.10:8081/random-entry";
+
 // Getting the Data
 let getEntries = () => {
   $.ajax({
     headers: { Accept: "application/json" },
     type: "GET",
-    url: "http://192.168.10.10:8080/api/entry",
+    url: serverPath,
     crossDomain: true,
     success: function (data, textStatus, request) {
       let tableBody = document.getElementById("tbody");
@@ -31,7 +35,7 @@ let randomEntry = () => {
   $.ajax({
     headers: { Accept: "application/json" },
     type: "GET",
-    url: "http://192.168.10.10:8081/random-entry",
+    url: apiAddress,
     crossDomain: true,
     success: function (data, textStatus, request) {
       let username = document.getElementById("username");
@@ -59,7 +63,7 @@ function send(btn) {
   btn.className = "btn btn-success disabled";
 
   var xmlhttp = new XMLHttpRequest();
-  xmlhttp.open("POST", "http://192.168.10.10:8080/api/entry");
+  xmlhttp.open("POST", serverPath);
   xmlhttp.setRequestHeader("Content-Type", "application/json");
   xmlhttp.send(JSON.stringify(person));
   location.reload();

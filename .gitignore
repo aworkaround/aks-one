@@ -13,8 +13,6 @@ example
 .github
 *.pyc
 pgd
-Pipfile
-Pipfile.lock
 demo-db/data
 demo-api-db/data
 null
