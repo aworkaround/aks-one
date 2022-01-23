@@ -1,0 +1,48 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Hardware Configurations | Using VirtualBox
+$box = "ubuntu/focal64"           # Visit https://app.vagrantup.com/boxes/search for specific boxes
+$ip_address = "10.10.10.10"       # IP address of VirtualMachine. It can be anything. Make sure it does not conflict with your existing environment.
+#                                   Don't make it first address in network (i.e. xxx.xxx.xx.001), because it will be used by host computer (your physcial computer)
+$synced_folder_source = "../../"  # Source address of folder you want to sync with your host computer and virtual machine. Keep it same, otherwise you'll get error while running ansible playbook written by me.
+$synced_folder_destination = "/home/vagrant/project"  # Where you want to keep the synced folder.
+$copy_bashrc_file = true                       # Recommended to use my customized .bashrc file. You can customize it as per your use.
+$copy_my_public_key = true        # This will allow you to ssh without having to run 'vagrant ssh' or use password.
+$copy_my_ssh_private_key = true   # WARNING: This might be a security concern to you. If multiple users are going to use this virtual machine, don't enable this option.
+$vm_cpus = 2                      # Min 2 CPUs required if you're going to use minikube in virtual machine.
+$vm_memory = 8192                 # Recommended to use minimum 4096.
+$run_ansible_playbook = true      # Recommended to run ansible-playbook written by me so that you can get basic applications installed.
+
+
+
+Vagrant.configure("2") do |config|
+  config.vm.box = $box
+  config.vm.network "private_network", ip: $ip_address
+  config.vm.synced_folder $synced_folder_source, $synced_folder_destination
+  config.vm.hostname = $vm_name
+  if $copy_my_public_key then
+    config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
+  end
+  if $copy_bashrc_file then
+    config.vm.provision "file", source: "./.bashrc", destination: "~/.bashrc"
+  end
+  if $copy_my_ssh_private_key then
+    config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/id_rsa.pub"
+    config.vm.provision "file", source: "~/.ssh/id_rsa", destination: "~/.ssh/id_rsa"
+  end
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = $vm_memory
+    vb.name = $vm_name
+    vb.cpus = $vm_cpus
+  end
+  if $run_ansible_playbook
+    config.vm.provision "shell", inline: <<-SHELL
+      apt update && apt upgrade -y
+      apt install -y ansible
+      su -c "ansible-galaxy install git+https://github.com/openstack/ansible-hardening" vagrant
+      # Change the vagrant_password value to actual password you want to setup for vagrant user.
+      su -c "ansible-playbook ~/project/infrastructure/client/install-requirements.yml --extra-vars vagrant_passwd=vagrant" vagrant
+    SHELL
+  end
+end

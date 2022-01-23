@@ -1,0 +1,134 @@
+---
+# Hardware specific settings can be configured
+# at ./infrastructure/client/Vagrantfile
+- name: Installing DevOps Basic Tools To Get Started
+  hosts: localhost
+  become: true
+  gather_facts: true
+  vars_prompt:
+  - name: vagrant_passwd
+    prompt: Enter vagrant User New Password
+    private: yes
+    encrypt: sha512_crypt
+    confirm: yes
+  vars:
+    config:
+      # hostname: ubuntu  ## Already done in Vagrantfile. You can uncomment it if you want to override the hostname.
+      # Used to see current branch in bash terminal prompt. Nice to have.
+      set_git_prompt: true
+      # You can modify ./.bashrc file to get more custom changes here.
+      set_bash_profile: true
+      ## Add GPG keys and PPA repositories
+      gpg_keys:
+        - name: terraform
+          url: "https://apt.releases.hashicorp.com/gpg"
+          keyring: ""
+        - name: python
+          url: "https://apt.releases.hashicorp.com/gpg"
+          keyring: ""
+        - name: kubernetes
+          url: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+          keyring: "/usr/share/keyrings/kubernetes-archive-keyring.gpg"
+        - name: helm
+          url: "https://baltocdn.com/helm/signing.asc"
+          keyring: ""
+      ppa_repos:
+        - name: terraform
+          repo: "deb [arch=amd64] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main"
+          update_cache: true
+        - name: python
+          repo: "ppa:deadsnakes/ppa"
+          update_cache: true
+        - name: kubernetes
+          repo: "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main"
+          update_cache: true
+        - name: helm
+          repo: "deb https://baltocdn.com/helm/stable/debian/ all main"
+          update_cache: true
+      # Packages to install without external PPA
+      packages:
+        - vim
+        - curl
+        - apt-transport-https
+        - ca-certificates
+        - ansible-lint
+        - docker.io
+        - docker-compose
+        - network-manager
+        - net-tools
+        - ufw
+      # Packages to install with external PPA mentioned in ppa_repos block
+      external_packages:
+        - terraform
+        - kubectl
+        - python3.10
+        - helm
+      # Install binary packages inside /usr/local/bin.
+      deb_packages:
+        - name: minikube
+          url: https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
+
+  tasks:
+    - name: Setting New Password of User vagrant
+      user:
+        name: vagrant
+        password: "{{ vagrant_passwd }}"
+        groups: sudo
+    - name: "Setting Hostname {{ config.hostname }}"
+      hostname:
+        name: "{{ config.hostname }}"
+      when: config.hostname is defined
+    - name: Copying ~/.git-prompt.bash File
+      get_url:
+        url: https://raw.githubusercontent.com/git/git/master/contrib/completion/git-prompt.sh
+        dest: "/home/{{ ansible_user }}/.git-prompt.bash"
+        mode: 0700
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+      when: config.set_git_prompt
+    - name: Setting .bashrc File
+      file:
+        path: "/home/{{ ansible_user }}/.bashrc"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: 0700
+      when: config.set_bash_profile
+    - name: "Adding GPG Keys"
+      apt_key:
+        url: "{{ item.url }}"
+        keyring: "{{ item.keyring }}"
+        state: present
+      # when: config.gpg_ppa_keys.gpg_url is defined
+      with_items: "{{ config.gpg_keys }}"
+    - name: "Adding PPA"
+      apt_repository:
+        repo: "{{ item.repo }}"
+        state: "present"
+        update_cache: "{{ item.update_cache }}"
+      with_items: "{{ config.ppa_repos }}"
+    - name: Download Deb Packages
+      get_url:
+        url: "{{ item.url }}"
+        dest: "/tmp/{{ item.name }}.deb"
+        mode: 0700
+        owner: "{{ ansible_user }}"
+      with_items: "{{ config.deb_packages }}"
+    - name: Install Deb Packages
+      apt: deb="/tmp/{{ item.name }}.deb"
+      with_items: "{{ config.deb_packages }}"
+    - name: Install Packages
+      package:
+        name: "{{ config.packages }}"
+        state: "present"
+    - name: Install External Packages
+      package:
+        name: "{{ config.external_packages }}"
+        state: "present"
+    - name: Allow Some Basic Ports
+      ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+        state: enabled
+  # roles:
+  #   - ansible-hardening
