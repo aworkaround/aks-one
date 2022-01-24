@@ -73,7 +73,7 @@
       user:
         name: vagrant
         password: "{{ vagrant_passwd }}"
-        groups: sudo
+        groups: [sudo, docker]
     - name: "Setting Hostname {{ config.hostname }}"
       hostname:
         name: "{{ config.hostname }}"
