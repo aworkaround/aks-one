@@ -15,11 +15,11 @@ pipeline {
         }
       }
     }
-  }
-  stage ('Success') {
-    agent any
-    steps {
-      echo "Success Printed."
+    stage ('Success') {
+      agent any
+      steps {
+        echo "Success Printed."
+      }
     }
   }
 }
