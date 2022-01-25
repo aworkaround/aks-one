@@ -16,7 +16,7 @@ pipeline {
       }
     }
   }
-  stage (Success) {
+  stage ('Success') {
     agent any
     steps {
       echo "Success Printed."
