@@ -1,8 +1,5 @@
 pipeline {
   agent any
-  environment {
-    ENV = DEV
-  }
   stages {
     stage('Build Docker Image') {
       steps {
