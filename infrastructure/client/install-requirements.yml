@@ -5,12 +5,12 @@
   hosts: localhost
   become: true
   gather_facts: true
-  vars_prompt:
-  - name: vagrant_passwd
-    prompt: Enter vagrant User New Password
-    private: yes
-    encrypt: sha512_crypt
-    confirm: yes
+  # vars_prompt:
+  #   - name: vagrant_passwd
+  #     prompt: Enter vagrant User New Password
+  #     private: yes
+  #     encrypt: sha512_crypt
+  #     confirm: yes
   vars:
     config:
       # hostname: ubuntu  ## Already done in Vagrantfile. You can uncomment it if you want to override the hostname.
@@ -32,6 +32,9 @@
         - name: helm
           url: "https://baltocdn.com/helm/signing.asc"
           keyring: ""
+        # - name: jenkins
+        #   url: "https://pkg.jenkins.io/debian-stable/jenkins.io.key"
+        #   keyring: "/usr/share/keyrings/jenkins-keyring.asc"
       ppa_repos:
         - name: terraform
           repo: "deb [arch=amd64] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main"
@@ -45,7 +48,10 @@
         - name: helm
           repo: "deb https://baltocdn.com/helm/stable/debian/ all main"
           update_cache: true
-      # Packages to install without external PPA
+      #   - name: jenkins
+      #     repo: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/"
+      #     update_cache: true
+      # # Packages to install without external PPA
       packages:
         - vim
         - curl
@@ -125,10 +131,10 @@
         port: "22"
         proto: tcp
         state: enabled
-    - name: Setting New Password of User vagrant
-      user:
-        name: vagrant
-        password: "{{ vagrant_passwd }}"
-        groups: [sudo, docker]
+    # - name: Setting New Password of User vagrant
+    #   user:
+    #     name: vagrant
+    #     password: "{{ vagrant_passwd }}"
+    #     groups: [sudo, docker]
   # roles:
   #   - ansible-hardening
