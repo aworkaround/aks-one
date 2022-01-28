@@ -2,7 +2,9 @@ pipeline {
   agent any
   stages {
     stage('Build') {
-      sh echo 'Stage Build passed!!'
+      steps {
+        sh echo 'Stage Build passed!!'
+      }
     }
   }
 }
