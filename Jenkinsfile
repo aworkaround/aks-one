@@ -1,9 +1,16 @@
 pipeline {
   agent any
+  environment {
+    ENV = DEV
+  }
   stages {
-    stage('Build') {
+    stage('Build Docker Image') {
       steps {
-        sh 'echo Stage Build passed!!'
+        script {
+          docker.withRegistry('https://registry.hub.docker.com', 'docker_creds') {
+            docker.Build('kamalk8s/demo-api:1.0.2')
+        }
+      }
       }
     }
   }
